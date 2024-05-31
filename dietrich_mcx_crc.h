@@ -77,7 +77,7 @@ class Dietrich : public PollingComponent, public UARTDevice {
   //counter data sensors 2
   
   	Sensor *pump_starts_sensor = new Sensor();
-	Sensor *number_of3way_valce_cycles_sensor = new Sensor();
+	Sensor *number_of3way_valve_cycles_sensor = new Sensor();
 	Sensor *burner_start_dhw_sensor = new Sensor();
 	Sensor *total_burner_start_sensor = new Sensor();
 	Sensor *failed_burner_start_sensor = new Sensor();
@@ -267,7 +267,7 @@ class Dietrich : public PollingComponent, public UARTDevice {
     if (isValidCRC(readdata, n)) {
      
       if (pump_starts_sensor->get_name().empty()==0) pump_starts_sensor->publish_state(((readdata[6]*256)+readdata[7])*8); delay(100); //delay for esphome to not disconnect api
-      if (number_of3way_valce_cycles_sensor->get_name().empty()==0) number_of3way_valce_cycles_sensor->publish_state(((readdata[8]*256)+readdata[9])*8); delay(100); //delay for esphome to not disconnect api
+      if (number_of3way_valve_cycles_sensor->get_name().empty()==0) number_of3way_valve_cycles_sensor->publish_state(((readdata[8]*256)+readdata[9])*8); delay(100); //delay for esphome to not disconnect api
       if (burner_start_dhw_sensor->get_name().empty()==0) burner_start_dhw_sensor->publish_state(((readdata[10]*256)+readdata[11])*8); delay(100); //delay for esphome to not disconnect api
       if (total_burner_start_sensor->get_name().empty()==0) total_burner_start_sensor->publish_state(((readdata[12]*256)+readdata[13])*8); delay(100); //delay for esphome to not disconnect api
       if (failed_burner_start_sensor->get_name().empty()==0) failed_burner_start_sensor->publish_state(((readdata[14]*256)+readdata[15])); delay(100); //delay for esphome to not disconnect api
