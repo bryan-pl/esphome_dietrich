@@ -1,5 +1,7 @@
 # Dietrich (Remeha) Boiler connectivity using ESP8266 with ESPHOME
 
+!Forked from kakaki/esphome_dietrich to provide full compatibility with my instance of HA and DeDietrich MCX PLUS.
+
 Library for reading data from De Dietrich (or Remeha) PC interface, tested with model mcr3.
 For this we use an ESP8266 (Wemos D1) with ESPHOME software - sample YAML files are in English and Polish.
 
@@ -29,3 +31,4 @@ And in printed box.
 ![Screenshot](box.jpg)
 
 Thanks to great work from https://github.com/rjblake/remeha - for creating maping of data in excel file.
+
