@@ -3,7 +3,7 @@ esphome:
   platform: ESP8266
   board: d1_mini
   includes:
-    - dietrich.h
+    - dietrich_mcx_crc.h
     
 wifi:
   ssid: "ssid"
@@ -50,7 +50,7 @@ sensor:
         dietrich->demand_source_bit0_sensor, dietrich->demand_source_bit1_sensor, dietrich->demand_source_bit2_sensor, dietrich->demand_source_bit3_sensor,
         dietrich->demand_source_bit4_sensor, dietrich->demand_source_bit5_sensor, dietrich->demand_source_bit6_sensor, dietrich->demand_source_bit7_sensor,
         dietrich->hours_run_pump_sensor, dietrich->hours_run_3way_sensor, dietrich->hours_run_ch_sensor, dietrich->hours_run_dhw_sensor,
-        dietrich->power_supply_aval_hours_sensor, dietrich->pump_starts_sensor, dietrich->number_of3way_valce_cycles_sensor, dietrich->burner_start_dhw_sensor,
+        dietrich->power_supply_avail_hours_sensor, dietrich->pump_starts_sensor, dietrich->number_of3way_valce_cycles_sensor, dietrich->burner_start_dhw_sensor,
         dietrich->total_burner_start_sensor, dietrich->failed_burner_start_sensor, dietrich->number_flame_loss_sensor,                 
         dietrich->hydro_pressure_sensor, dietrich->control_temp_sensor, dietrich->dhw_flowrate_sensor 
       };
