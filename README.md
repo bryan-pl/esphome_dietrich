@@ -2,9 +2,11 @@
 
 !Forked from kakaki/esphome_dietrich to provide full compatibility with my instance of HA and DeDietrich MCX PLUS.
 
+The board used - Adafruit Huzzach - due to smaller current draw (no usb interface on board) and +5v compatible uart RX pin.
+
+
 Library for reading data from De Dietrich (or Remeha) PC interface, tested with model mcr3.
 For this we use an ESP8266 (Wemos D1) with ESPHOME software - sample YAML files are in English and Polish.
-
 
 It connects to the boiler using a 4P4C (RJ10) connector with the following pinouts:
 ```
