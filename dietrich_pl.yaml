@@ -1,7 +1,7 @@
 esphome:
   name: uart_dietrich
   platform: ESP8266
-  board: d1_mini
+  board: huzzah     # change board from wemos d1 mini to adafruit huzzah to limit the draw current from boiler
   includes:
     - dietrich_mcx_crc.h
     
@@ -35,6 +35,12 @@ text_sensor:
   - platform: template
     id: piec_podstatus_txt
     name: "Piec Podstatus"
+  - platorm: template        # prepare for lockout codes text sensor
+    id: piec_lockout_txt
+    name: "Piec lockout code"
+  - platform: template      # prepare for blocking codes text sensor
+    id: piec_blocking_txt
+    name: "Piec blocking code"
 
 sensor:
   - platform: custom
