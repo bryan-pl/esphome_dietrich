@@ -89,8 +89,9 @@ class Dietrich : public PollingComponent, public UARTDevice {
   bool sem_reading_data = false;
   bool sem_read_all = true;
   int counter_timer = 99;
-  const int SAMPLE_READ_BUFFER_SIZE = 128;  //increase the buffer size  from 80 to 128 to get best possible answer for avanta
-  const int COUNTER_READ_BUFFER_SIZE = 48; //increase buffer size from 28 to 48  to check real answer for avanta
+  const int SAMPLE_READ_BUFFER_SIZE = 65;
+  const int COUNTER_READ_BUFFER_SIZE = 25;
+
 
   byte sample[8] =    {0x02, 0x52, 0x05, 0x06, 0x02, 0x00, 0x53, 0x03 };
   byte counter1[8] =  {0x02, 0x52, 0x05, 0x06, 0x10, 0x01, 0x40, 0x03 };
@@ -108,44 +109,41 @@ class Dietrich : public PollingComponent, public UARTDevice {
   }
   
   float signedFloat(float avalue) {
-	  float f = avalue;
+    float f = avalue;
     if (f>32768) f = f-65536;
     return f;
   }
-  // obliczenie CRC dla odczytanych wartości
-  //prosty XOR z wartością inicjującą 0x00
-  bool isValidCRC(byte response[], int n){
+  
+  
+  bool isValidCRC(byte response[], int n){ // obliczenie CRC dla odczytanych wartości   //prosty XOR
   if (n < 2) return false;
 
-  int expected_crc = (response[n - 2]);  // expected crc
-  int calculated_crc = 0x00;  // initial value
+  int expected_crc = (response[n - 2]);  // suma kontrolna w przesłanym pakiecie
+  int calculated_crc = response[1];  // wartość inicjująca
   
-  for ( int i = 1; i < n - 2; i++ ) {    //starting from 0 and compare initial string with 0x02 - it seems to be unneccesary - start from 1 to n-3 and initialise with 0x00 as the initial character of communication is 0x02
+  for ( int i = 2; i < n - 2; i++ ) {
     calculated_crc ^= response[i];
   }
   return calculated_crc == expected_crc;
-}
+  }
+
 
   void getSample() {
-    
     byte readdata[SAMPLE_READ_BUFFER_SIZE];
-    char str[SAMPLE_READ_BUFFER_SIZE * 2 + 1] = "";
-    
-    //ESP_LOGD("custom", "read sample");
+    char str[129] = "";
     
     write_array(sample,sizeof(sample));
     delay(250);
- 
+
     int n=0;
-    while(available() && n < SAMPLE_READ_BUFFER_SIZE) {
+    while(available()) {
       readdata[n] = read();
       n++;
     }
-	  
-    ESP_LOGD("custom", "sample length: %d", n);   //to assess real sample size
-	  
-    if (isValidCRC(readdata, n)) {
-    
+
+    ESP_LOGD("custom", "sample length: %d", n);
+
+    if (isValidCRC(readdata, n)) { //CRC check added
         int bits = 0;
         
         if (flow_temp_sensor->get_name().empty()==0) flow_temp_sensor->publish_state(signedFloat((readdata[7]*256)+readdata[6])*0.01); delay(100); //delay for esphome to not disconnect api        
@@ -210,7 +208,7 @@ class Dietrich : public PollingComponent, public UARTDevice {
         sub_state_sensor->publish_state(readdata[49]); delay(200); //delay for esphome to not disconnect api
 
         if (sem_read_all) {   
-					if (hydro_pressure_sensor->get_name().empty()==0) hydro_pressure_sensor->publish_state(readdata[56]); delay(100); //delay for esphome to not disconnect api
+					if (hydro_pressure_sensor->get_name().empty()==0) hydro_pressure_sensor->publish_state(readdata[56]); delay(100); //delay for esphome to not disconnect api  // value not used for mcx plus
 				
 					bits = readdata[57];
 					if (hru_sensor->get_name().empty()==0) hru_sensor->publish_state(bitRead(bits, 1)); delay(100); //delay for esphome to not disconnect api
@@ -218,34 +216,34 @@ class Dietrich : public PollingComponent, public UARTDevice {
 					if (control_temp_sensor->get_name().empty()==0) control_temp_sensor->publish_state(signedFloat((readdata[59]*256)+readdata[58])*0.01); delay(100); //delay for esphome to not disconnect api
 					if (dhw_flowrate_sensor->get_name().empty()==0) dhw_flowrate_sensor->publish_state(signedFloat((readdata[61]*256)+readdata[60])*0.01); delay(100); //delay for esphome to not disconnect api
         }
-                       
+
         sem_read_all=!sem_read_all;
                         
     }
     else {
         ESP_LOGD("custom", "crc error");
     }
-    
-    array_to_string(readdata, 80, str);
+  
+    array_to_string(readdata, SAMPLE_READ_BUFFER_SIZE, str);
     ESP_LOGD("custom", "sample data: %s", str);    
     
   }
   
   void getCounter() {
     byte readdata[COUNTER_READ_BUFFER_SIZE];
-    char str[COUNTER_READ_BUFFER_SIZE * 2 + 1] = "";
+    char str[49] = "";
         
     write_array(counter1,sizeof(counter1));
     delay(150);
 
     int n=0;
-    while(available() && n < COUNTER_READ_BUFFER_SIZE) {
+    while(available()) {
       readdata[n] = read();
       n++;
     }
-    ESP_LOGD("custom", "counter1 length: %d", n);   //to assess real sample size
     
-if (isValidCRC(readdata, n)) {
+    ESP_LOGD("custom", "counter1 length: %d", n);
+    if (isValidCRC(readdata, n)) { //CRC check added
     
       if (hours_run_pump_sensor->get_name().empty()==0) hours_run_pump_sensor->publish_state(((readdata[12]*256)+readdata[13])*2); delay(100); //delay for esphome to not disconnect api      
       if (hours_run_3way_sensor->get_name().empty()==0) hours_run_3way_sensor->publish_state(((readdata[14]*256)+readdata[15])*2); delay(100); //delay for esphome to not disconnect api
@@ -255,21 +253,21 @@ if (isValidCRC(readdata, n)) {
    
     }
     
-    array_to_string(readdata, 28, str);
+    array_to_string(readdata, COUNTER_READ_BUFFER_SIZE, str);
     ESP_LOGD("custom", "counter1 data: %s", str);
     
     write_array(counter2,sizeof(counter2));
     delay(150);
 
     n=0;
-    while(available() && n < COUNTER_READ_BUFFER_SIZE) {
+    while(available()) {
       readdata[n] = read();
       n++;
     }
 
-ESP_LOGD("custom", "counter2 length: %d", n);   //to assess real sample size
-	  
-    if (isValidCRC(readdata, n)) {
+    ESP_LOGD("custom", "counter2 length: %d", n);
+    
+    if (isValidCRC(readdata, n)) { //CRC check added
      
       if (pump_starts_sensor->get_name().empty()==0) pump_starts_sensor->publish_state(((readdata[6]*256)+readdata[7])*8); delay(100); //delay for esphome to not disconnect api
       if (number_of3way_valve_cycles_sensor->get_name().empty()==0) number_of3way_valve_cycles_sensor->publish_state(((readdata[8]*256)+readdata[9])*8); delay(100); //delay for esphome to not disconnect api
@@ -279,8 +277,7 @@ ESP_LOGD("custom", "counter2 length: %d", n);   //to assess real sample size
       if (number_flame_loss_sensor->get_name().empty()==0) number_flame_loss_sensor->publish_state(((readdata[16]*256)+readdata[17])); delay(100); //delay for esphome to not disconnect api    
 	
 	}
-    
-    array_to_string(readdata, 28, str);
+    array_to_string(readdata, COUNTER_READ_BUFFER_SIZE, str);
     ESP_LOGD("custom", "counter2 data: %s", str);
   }
 
