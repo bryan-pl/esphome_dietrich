@@ -89,8 +89,8 @@ class Dietrich : public PollingComponent, public UARTDevice {
   bool sem_reading_data = false;
   bool sem_read_all = true;
   int counter_timer = 99;
-  const int SAMPLE_READ_BUFFER_SIZE = 80;
-  const int COUNTER_READ_BUFFER_SIZE = 28;
+  const int SAMPLE_READ_BUFFER_SIZE = 128;  //increase the buffer size  from 80 to 128 to get best possible answer for avanta
+  const int COUNTER_READ_BUFFER_SIZE = 48; //increase buffer size from 28 to 48  to check real answer for avanta
 
   byte sample[8] =    {0x02, 0x52, 0x05, 0x06, 0x02, 0x00, 0x53, 0x03 };
   byte counter1[8] =  {0x02, 0x52, 0x05, 0x06, 0x10, 0x01, 0x40, 0x03 };
@@ -113,14 +113,14 @@ class Dietrich : public PollingComponent, public UARTDevice {
     return f;
   }
   // obliczenie CRC dla odczytanych wartości
-  //prosty XOR z wartością inicjującą 0x02
+  //prosty XOR z wartością inicjującą 0x00
   bool isValidCRC(byte response[], int n){
   if (n < 2) return false;
 
-  int expected_crc = (response[n - 2]);  // suma kontrolna w przesłanym pakiecie
-  int calculated_crc = 0x02;  // wartość inicjująca
+  int expected_crc = (response[n - 2]);  // expected crc
+  int calculated_crc = 0x00;  // initial value
   
-  for ( int i = 1; i < n - 2; i++ ) {
+  for ( int i = 1; i < n - 2; i++ ) {    //starting from 0 and compare initial string with 0x02 - it seems to be unneccesary - start from 1 to n-3 and initialise with 0x00 as the initial character of communication is 0x02
     calculated_crc ^= response[i];
   }
   return calculated_crc == expected_crc;
@@ -141,7 +141,9 @@ class Dietrich : public PollingComponent, public UARTDevice {
       readdata[n] = read();
       n++;
     }
-        
+	  
+    ESP_LOGD("custom", "sample length: %d", n);   //to assess real sample size
+	  
     if (isValidCRC(readdata, n)) {
     
         int bits = 0;
@@ -241,8 +243,9 @@ class Dietrich : public PollingComponent, public UARTDevice {
       readdata[n] = read();
       n++;
     }
+    ESP_LOGD("custom", "counter1 length: %d", n);   //to assess real sample size
     
-    if (isValidCRC(readdata, n)) {
+if (isValidCRC(readdata, n)) {
     
       if (hours_run_pump_sensor->get_name().empty()==0) hours_run_pump_sensor->publish_state(((readdata[12]*256)+readdata[13])*2); delay(100); //delay for esphome to not disconnect api      
       if (hours_run_3way_sensor->get_name().empty()==0) hours_run_3way_sensor->publish_state(((readdata[14]*256)+readdata[15])*2); delay(100); //delay for esphome to not disconnect api
@@ -264,6 +267,8 @@ class Dietrich : public PollingComponent, public UARTDevice {
       n++;
     }
 
+ESP_LOGD("custom", "counter2 length: %d", n);   //to assess real sample size
+	  
     if (isValidCRC(readdata, n)) {
      
       if (pump_starts_sensor->get_name().empty()==0) pump_starts_sensor->publish_state(((readdata[6]*256)+readdata[7])*8); delay(100); //delay for esphome to not disconnect api
