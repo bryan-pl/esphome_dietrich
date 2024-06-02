@@ -3,7 +3,7 @@ esphome:
   platform: ESP8266
   board: huzzah
   includes:
-    - dietrich_mcx_crc.h
+    - dietrich_mcx.h
     
 wifi:
   ssid: "ssid"
