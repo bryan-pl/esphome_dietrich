@@ -1,53 +1,60 @@
 esphome:
-  name: uart_dietrich
-  platform: ESP8266
-  board: huzzah     # change board from wemos d1 mini to adafruit huzzah to limit the draw current from boiler
+  name: dedietrich
+  friendly_name: DeDietrich
   includes:
     - dietrich_mcx.h
-    
-wifi:
-  ssid: "ssid"
-  password: "secret"
+
+esp8266:
+  board: huzzah
 
 # Enable logging
 logger:
+#  baud_rate: 0
   hardware_uart: UART1
-  
-# web server
-web_server:
 
 # Enable Home Assistant API
 api:
+  encryption:
+    key: "Pdctbb71KBIbT/1lqQJ4inSog4nZ22SzM3/m2hFtOx8="
 
 ota:
+  password: "fc7aaa30e6af984cd6a438da00cee6ae"
 
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Dedietrich Fallback Hotspot"
+    password: "gFZCVjeszpr4"
+
+captive_portal:
+    
 uart:
   id: uart_bus
   baud_rate: 9600
-  tx_pin: GPIO1
-  rx_pin: GPIO3
-  # stop_bits: 1
+  tx_pin: GPIO01 # 01
+  rx_pin: GPIO03 # 03
+  stop_bits: 1
 
 text_sensor:
   - platform: template
-    id: piec_status_txt
-    name: "Piec Status"
+    id: kociol_status_txt
+    name: "Kocioł Status"
   - platform: template
-    id: piec_podstatus_txt
-    name: "Piec Podstatus"
-  - platorm: template        # prepare for lockout codes text sensor
-    id: piec_lockout_txt
-    name: "Piec lockout code"
-  - platform: template      # prepare for blocking codes text sensor
-    id: piec_blocking_txt
-    name: "Piec blocking code"
+    id: kociol_zatrzymanie_txt
+    name: "Kocioł kod zatrzymania"
+  - platform: template
+    id: kociol_blokada_txt
+    name: "Kocioł kod blokady"
 
 sensor:
   - platform: custom
     lambda: |-
       auto dietrich = new Dietrich(id(uart_bus));
       App.register_component(dietrich);
-      return {dietrich->state_sensor, dietrich->sub_state_sensor, dietrich->lockout_sensor, dietrich->blocking_sensor, 
+      return {dietrich->state_sensor, dietrich->lockout_sensor, dietrich->blocking_sensor, 
         dietrich->flow_temp_sensor, dietrich->return_temp_sensor, dietrich->outside_temp_sensor, dietrich->calorifier_temp_sensor, 
         dietrich->boiler_control_temp_sensor, dietrich->room_temp_sensor, dietrich->ch_setpoint_sensor, dietrich->dhw_setpoint_sensor, dietrich->room_temp_setpoint_sensor,
         dietrich->fan_speed_setpoint_sensor, dietrich->fan_speed_sensor,                  
@@ -57,209 +64,178 @@ sensor:
         dietrich->demand_source_bit4_sensor, dietrich->demand_source_bit5_sensor, dietrich->demand_source_bit6_sensor, dietrich->demand_source_bit7_sensor,      
         dietrich->hours_run_pump_sensor, dietrich->hours_run_3way_sensor, dietrich->hours_run_ch_sensor, dietrich->hours_run_dhw_sensor,
         dietrich->power_supply_avail_hours_sensor, dietrich->pump_starts_sensor, dietrich->number_of3way_valve_cycles_sensor, dietrich->burner_start_dhw_sensor,
-        dietrich->total_burner_start_sensor, dietrich->failed_burner_start_sensor, dietrich->number_flame_loss_sensor,      
-        dietrich->hydro_pressure_sensor, dietrich->control_temp_sensor, dietrich->dhw_flowrate_sensor 
+        dietrich->total_burner_start_sensor, dietrich->failed_burner_start_sensor, dietrich->number_flame_loss_sensor 
       };
 
     sensors:
-    - id: piec_status
+    - id: kociol_status
       on_value:
         then:
           - lambda: |-
-              if (id(piec_status).state==0) {id(piec_status_txt).publish_state("0:Czuwanie");} //Standby
-              else if (id(piec_status).state==1) {id(piec_status_txt).publish_state("1:Uruchomienie kotła");} //Boiler start
-              else if (id(piec_status).state==2) {id(piec_status_txt).publish_state("2:Uruchomienie palnika");} //Burner start
-              else if (id(piec_status).state==3) {id(piec_status_txt).publish_state("3:Ogrzewanie CO");} //Burning CH
-              else if (id(piec_status).state==4) {id(piec_status_txt).publish_state("4:Ogrzewanie CWU");} //Burning DHW
-              else if (id(piec_status).state==5) {id(piec_status_txt).publish_state("5:Zatrzymanie palnika");} //Burner stop
-              else if (id(piec_status).state==6) {id(piec_status_txt).publish_state("6:Zatrzymanie kotła");} //Boiler stop
-              else if (id(piec_status).state==7) {id(piec_status_txt).publish_state("7:-");}
-              else if (id(piec_status).state==8) {id(piec_status_txt).publish_state("8:Kontrolowane zatrzymanie");} //Controlled stop
-              else if (id(piec_status).state==9) {id(piec_status_txt).publish_state("9:Tryb blokowania");} //Blocking mode
-              else if (id(piec_status).state==10) {id(piec_status_txt).publish_state("10:Locking mode");}
-              else if (id(piec_status).state==11) {id(piec_status_txt).publish_state("11:Chimney mode L");}
-              else if (id(piec_status).state==12) {id(piec_status_txt).publish_state("12:Chimney mode h");}
-              else if (id(piec_status).state==13) {id(piec_status_txt).publish_state("13:Chimney mode H");}
-              else if (id(piec_status).state==14) {id(piec_status_txt).publish_state("14:-");}
-              else if (id(piec_status).state==15) {id(piec_status_txt).publish_state("15:Manual-heatdemand");}
-              else if (id(piec_status).state==16) {id(piec_status_txt).publish_state("16:Zabezpieczenie przed zamarzaniem");} //Boiler-frost-protection
-              else if (id(piec_status).state==17) {id(piec_status_txt).publish_state("17:Odpowietrzanie");} //De-aeration
+              if (id(kociol_status).state==0) {id(kociol_status_txt).publish_state("0:Czuwanie");} //0:Off-position, no heat demand 
+              else if (id(kociol_status).state==1) {id(kociol_status_txt).publish_state("1:Wentylacja przed/po");} //1:Pre-vent./post-ventilation
+              else if (id(kociol_status).state==2) {id(kociol_status_txt).publish_state("2:Zapłon");} //2:Ignition
+              else if (id(kociol_status).state==3) {id(kociol_status_txt).publish_state("3:Ogrzewanie CO");} //Burning CH
+              else if (id(kociol_status).state==4) {id(kociol_status_txt).publish_state("4:Ogrzewanie CWU");} //Burning DHW
+              else if (id(kociol_status).state==5) {id(kociol_status_txt).publish_state("5:Zatrzymanie palnika");} //5:Anti hunting time CH"
+              else if (id(kociol_status).state==6) {id(kociol_status_txt).publish_state("6:Czas pompy po CO");} //6:Post pump time CH 
+              else if (id(kociol_status).state==7) {id(kociol_status_txt).publish_state("7:Czas pompy po CWU");} //7:Post pump time DHW
+              else if (id(kociol_status).state==8) {id(kociol_status_txt).publish_state("8:Kontrolowane zatrzymanie");} //Controlled stop
+              else if (id(kociol_status).state==9) {id(kociol_status_txt).publish_state("9:Wyłączenie");} //Blocking mode
+              else if (id(kociol_status).state==10) {id(kociol_status_txt).publish_state("10:Cykl wentylacji");} //"10:Ventingcycle" 
+              else if (id(kociol_status).state==11) {id(kociol_status_txt).publish_state("11:Wymuszony niski płomień z palnika");} //"11:Forced burner low flame"
+              else if (id(kociol_status).state==12) {id(kociol_status_txt).publish_state("12:Wymusz wys płom CO");} //"12:Forced burner high CH" 
+              else if (id(kociol_status).state==13) {id(kociol_status_txt).publish_state("13:Wymusz wys płom DHW");} //"13:Forced burner high DHW"
+              else if (id(kociol_status).state==15) {id(kociol_status_txt).publish_state("15:Ręczne żądanie temp");} //"15:Manual heat demand"
               else 
-                {id(piec_status_txt).publish_state("999:Unknown");}
+                {id(kociol_status_txt).publish_state("999:Nieznany");}
 
-    - id: piec_podstatus
-      on_value:
+    - id: kociol_zatrzymanie
+      name: "Kocioł lockout"
+      on_value: 
         then:
           - lambda: |-
-              if (id(piec_podstatus).state==0) {id(piec_podstatus_txt).publish_state("0:Czuwanie");} //Standby
-              else if (id(piec_podstatus).state==1) {id(piec_podstatus_txt).publish_state("1:Anti-cycling");}
-              else if (id(piec_podstatus).state==2) {id(piec_podstatus_txt).publish_state("2:Open hydraulic valve");}
-              else if (id(piec_podstatus).state==3) {id(piec_podstatus_txt).publish_state("3:Pump start");}
-              else if (id(piec_podstatus).state==4) {id(piec_podstatus_txt).publish_state("4:Wait for burner start");}
-              else if (id(piec_podstatus).state==5) {id(piec_podstatus_txt).publish_state("5:-");}
-              else if (id(piec_podstatus).state==6) {id(piec_podstatus_txt).publish_state("6:-");}
-              else if (id(piec_podstatus).state==7) {id(piec_podstatus_txt).publish_state("7:-");}
-              else if (id(piec_podstatus).state==8) {id(piec_podstatus_txt).publish_state("8:-");}
-              else if (id(piec_podstatus).state==9) {id(piec_podstatus_txt).publish_state("9:-");}
-              else if (id(piec_podstatus).state==10) {id(piec_podstatus_txt).publish_state("10:Open external gas valve");}
-              else if (id(piec_podstatus).state==11) {id(piec_podstatus_txt).publish_state("11:Fan to fluegasvalve speed");}
-              else if (id(piec_podstatus).state==12) {id(piec_podstatus_txt).publish_state("12:Open fluegasvalve");}
-              else if (id(piec_podstatus).state==13) {id(piec_podstatus_txt).publish_state("13:Pre-purge");}
-              else if (id(piec_podstatus).state==14) {id(piec_podstatus_txt).publish_state("14:Wait for release");}
-              else if (id(piec_podstatus).state==15) {id(piec_podstatus_txt).publish_state("15:Burner start");}
-              else if (id(piec_podstatus).state==16) {id(piec_podstatus_txt).publish_state("16:VPS test");}
-              else if (id(piec_podstatus).state==17) {id(piec_podstatus_txt).publish_state("17:Pre-ignition");}
-              else if (id(piec_podstatus).state==18) {id(piec_podstatus_txt).publish_state("18:Ignition");}
-              else if (id(piec_podstatus).state==19) {id(piec_podstatus_txt).publish_state("19:Flame check");}
-              else if (id(piec_podstatus).state==20) {id(piec_podstatus_txt).publish_state("20:Interpurge");}
-              else if (id(piec_podstatus).state==30) {id(piec_podstatus_txt).publish_state("30:Normal internal setpoint");}
-              else if (id(piec_podstatus).state==31) {id(piec_podstatus_txt).publish_state("31:Limited internal setpoint");}
-              else if (id(piec_podstatus).state==32) {id(piec_podstatus_txt).publish_state("32:Normal power control");}
-              else if (id(piec_podstatus).state==33) {id(piec_podstatus_txt).publish_state("33:Gradient control level 1");}
-              else if (id(piec_podstatus).state==34) {id(piec_podstatus_txt).publish_state("34:Gradient control level 2");}
-              else if (id(piec_podstatus).state==35) {id(piec_podstatus_txt).publish_state("35:Gradient control level 3");}
-              else if (id(piec_podstatus).state==36) {id(piec_podstatus_txt).publish_state("36:Flame protection");}
-              else if (id(piec_podstatus).state==37) {id(piec_podstatus_txt).publish_state("37:Stabilisation time");}
-              else if (id(piec_podstatus).state==38) {id(piec_podstatus_txt).publish_state("38:Cold start");}
-              else if (id(piec_podstatus).state==39) {id(piec_podstatus_txt).publish_state("39:Limited power Tfg");}
-              else if (id(piec_podstatus).state==40) {id(piec_podstatus_txt).publish_state("40:Burner stop");}
-              else if (id(piec_podstatus).state==41) {id(piec_podstatus_txt).publish_state("41:Post purge");}
-              else if (id(piec_podstatus).state==42) {id(piec_podstatus_txt).publish_state("42:Fan to flue gas valve speed");}
-              else if (id(piec_podstatus).state==43) {id(piec_podstatus_txt).publish_state("43:Close flue gas valve");}
-              else if (id(piec_podstatus).state==44) {id(piec_podstatus_txt).publish_state("44:Stop fan");}
-              else if (id(piec_podstatus).state==45) {id(piec_podstatus_txt).publish_state("45:Close external gas valve");}
-              else if (id(piec_podstatus).state==46) {id(piec_podstatus_txt).publish_state("46:-");}
-              else if (id(piec_podstatus).state==47) {id(piec_podstatus_txt).publish_state("47:-");}
-              else if (id(piec_podstatus).state==48) {id(piec_podstatus_txt).publish_state("48:-");}
-              else if (id(piec_podstatus).state==49) {id(piec_podstatus_txt).publish_state("49:-");}
-              else if (id(piec_podstatus).state==39) {id(piec_podstatus_txt).publish_state("39:Heat exchanger protection");}
-              else if (id(piec_podstatus).state==60) {id(piec_podstatus_txt).publish_state("60:Pump post running");}
-              else if (id(piec_podstatus).state==61) {id(piec_podstatus_txt).publish_state("61:Pump stop");}
-              else if (id(piec_podstatus).state==62) {id(piec_podstatus_txt).publish_state("62:Close hydraulic valve");}
-              else if (id(piec_podstatus).state==63) {id(piec_podstatus_txt).publish_state("63:Start anti-cycle timer");}
-              else if (id(piec_podstatus).state==255) {id(piec_podstatus_txt).publish_state("255:Reset wait time");}
-              else if (id(piec_podstatus).state==999) {id(piec_podstatus_txt).publish_state("999:Unkown Sub-State");}
+              if (id(kociol_zatrzymanie).state==0) {id(kociol_zatrzymanie_txt).publish_state("E00: Błąd czujnika");} //E00: Sensor error
+              else if (id(kociol_zatrzymanie).state==1) {id(kociol_zatrzymanie_txt).publish_state("E01: Przepływ &gt;Tmax.");} //E01: Flow &gt; Tmax.
+              else if (id(kociol_zatrzymanie).state==2) {id(kociol_zatrzymanie_txt).publish_state("E02: Powrót &gt; Przepływ");} //E02: Return &gt; Flow
+              else if (id(kociol_zatrzymanie).state==3) {id(kociol_zatrzymanie_txt).publish_state("E03: Błąd uziemienia");} //E03: Earthing fault
+              else if (id(kociol_zatrzymanie).state==4) {id(kociol_zatrzymanie_txt).publish_state("E04: Brak płomienia");} //E04: No flame
+              else if (id(kociol_zatrzymanie).state==5) {id(kociol_zatrzymanie_txt).publish_state("E05: Więcej niz 5 błędów rozruchu");} //E05: &gt;5 start failures
+              else if (id(kociol_zatrzymanie).state==6) {id(kociol_zatrzymanie_txt).publish_state("E06: Symulacja płomieni");} //E06: Flame simulation"
+              else if (id(kociol_zatrzymanie).state==7) {id(kociol_zatrzymanie_txt).publish_state("E07: Zbyt niskie ciśnienie wody");} //E07: Water pressure to low"
+              else if (id(kociol_zatrzymanie).state==8) {id(kociol_zatrzymanie_txt).publish_state("E08: Błąd wentylatora");} //E08: Fan error"
+              else if (id(kociol_zatrzymanie).state==9) {id(kociol_zatrzymanie_txt).publish_state("E09: Niskie ciśnienie hydrauliczne");} //E09: Low hydraulic pressure
+              else if (id(kociol_zatrzymanie).state==10) {id(kociol_zatrzymanie_txt).publish_state("E10: Niewystarczające odpowietrzenie");} //E10: insufficient deairation
+              else if (id(kociol_zatrzymanie).state==11) {id(kociol_zatrzymanie_txt).publish_state("E11: Temp skrzyni powietrzniej &gt; maks.");} //E11: Airbox temp. &gt; max.
+              else if (id(kociol_zatrzymanie).state==12) {id(kociol_zatrzymanie_txt).publish_state("E12: Błąd kontroli HRU");} //E12: Error checking HRU
+              else if (id(kociol_zatrzymanie).state==13) {id(kociol_zatrzymanie_txt).publish_state("E13: zapłon / fuse");} //E13: fuse
+              else if (id(kociol_zatrzymanie).state==43) {id(kociol_zatrzymanie_txt).publish_state("E43: Granice parametrów");} //E43: Parameter bounds 
+              else if (id(kociol_zatrzymanie).state==44) {id(kociol_zatrzymanie_txt).publish_state("E44: Suma kontrolna param");} // E44: Parameter checksum
+              else if (id(kociol_zatrzymanie).state==45) {id(kociol_zatrzymanie_txt).publish_state("E45: Parametry domyślne");} //E45: Default parameters
+              else if (id(kociol_zatrzymanie).state==46) {id(kociol_zatrzymanie_txt).publish_state("E46: błąd tabeli dF/dU");} // E46: dF/dU table error
+              else if (id(kociol_zatrzymanie).state==255) {id(kociol_zatrzymanie_txt).publish_state("Wszystko OK");} // SNAFU
+              else 
+                {id(kociol_zatrzymanie_txt).publish_state("999:Nieznany kod zamykający");} // Unknown locking code
+    
+    - id: kociol_blokada
+      name: "Kocioł blocking"
+      on_value: 
+        then:
+          - lambda: |-
+              if (id(kociol_blokada).state==40) {id(kociol_blokada_txt).publish_state("B40: Nieznane kody kotła");} //B40: Boiler codes unknown
+              else if (id(kociol_blokada).state==80) {id(kociol_blokada_txt).publish_state("B80: wprowadzanie wyłączenia");} //B80: shut down input
+              else if (id(kociol_blokada).state==81) {id(kociol_blokada_txt).publish_state("B81: Błąd kontroli HRU");} //B81: error checking HRU
+              else if (id(kociol_blokada).state==82) {id(kociol_blokada_txt).publish_state("B82: Ogrz kotł prom sł, DHW wył");} //B82: Solar boiler warm, DHW off
+              else if (id(kociol_blokada).state==83) {id(kociol_blokada_txt).publish_state("B83: Błąd czuj podgrzewacza");} //B83: Calorifier sensor error
+              else if (id(kociol_blokada).state==90) {id(kociol_blokada_txt).publish_state("B90: wzrost temperatury");} //B90: temperaure increase
+              else if (id(kociol_blokada).state==91) {id(kociol_blokada_txt).publish_state("B91: deltaT zbyt wysoka");} //B91: deltaT to big
+              else if (id(kociol_blokada).state==92) {id(kociol_blokada_txt).publish_state("B92: niedostateczny przepływ");} //B92: insufficient flow
+              else if (id(kociol_blokada).state==255) {id(kociol_blokada_txt).publish_state("Wszystko OK");} // SNAFU
+              else 
+                {id(kociol_blokada_txt).publish_state("999:Nieznany kod blokujący");} // Unknown blocking code
         
-    - name: "Piec lockout"
-    - name: "Piec blocking"
-        
-    - name: "Piec temp. przepływu"
+    - name: "Kocioł temp. przepływu"
       unit_of_measurement: °C
       accuracy_decimals: 2
-    - name: "Piec temp. powrotu"
+    - name: "Kocioł temp. powrotu"
       unit_of_measurement: °C
       accuracy_decimals: 2
-    - name: "Piec temp. zewnętrzna"
+    - name: "Kocioł temp. zewnętrzna"
       unit_of_measurement: °C
       accuracy_decimals: 2
-    - name: "Piec temp. podgrzewacza"
+    - name: "Kocioł temp. podgrzewacza"
       unit_of_measurement: °C
       accuracy_decimals: 2
-    - name: "Piec temp. pieca"
+    - name: "Kocioł temp. kociola"
       unit_of_measurement: °C
       accuracy_decimals: 2
-    - name: "Piec temp. pomieszczenia"
+    - name: "Kocioł temp. pomieszczenia"
       unit_of_measurement: °C
       accuracy_decimals: 2
-    - name: "Piec zadana temp. CO"
+    - name: "Kocioł zadana temp. CO"
       unit_of_measurement: °C
       accuracy_decimals: 2
-    - name: "Piec zadana temp. CWU"
+    - name: "Kocioł zadana temp. CWU"
       unit_of_measurement: °C
       accuracy_decimals: 2  
-    - name: "Piec zadana temp. pomieszczenia"
+    - name: "Kocioł zadana temp. pomieszczenia"
       unit_of_measurement: °C
       accuracy_decimals: 2  
-    - name: "Piec zadana prędkość wentylatora"
+    - name: "Kocioł zadana prędkość wentylatora"
       unit_of_measurement: rpm
       accuracy_decimals: 2  
     
-    - name: "Piec prędkość wentylatora"
+    - name: "Kocioł prędkość wentylatora"
       unit_of_measurement: rpm
       accuracy_decimals: 2  
 
-    - name: "Piec prąd jonizacji"
+    - name: "Kocioł prąd jonizacji"
       unit_of_measurement: "μA"
       accuracy_decimals: 1  
-    - name: "Piec wewnętrzna wartość zadana"
+    - name: "Kocioł wewnętrzna wartość zadana"
       unit_of_measurement: "%"
       accuracy_decimals: 0  
-    - name: "Piec available_power"
+    - name: "Kocioł available_power"
       unit_of_measurement: "%"
       accuracy_decimals: 0  
-    - name: "Piec pump_percentage"
+    - name: "Kocioł pump_percentage"
       unit_of_measurement: "%"
       accuracy_decimals: 0  
     
-    - name: "Piec desired_max_power"
+    - name: "Kocioł desired_max_power"
       unit_of_measurement: "%"
       accuracy_decimals: 0  
-    - name: "Piec actual_power"
+    - name: "Kocioł actual_power"
       unit_of_measurement: "%"
       accuracy_decimals: 0      
       
-    - name: "Piec Mod.Controller Connected"
-    - name: "Piec Heat demand from Mod.Controller"
-    - name: "Piec Heat demand from on/off controller"
-    - name: "Piec Frost Protection"        
-    - name: "Piec DHW Eco"
-    - name: "Piec DHW Blocking"
-    - name: "Piec Anti Legionella"
-    - name: "Piec DHW Heat Demand"
+    - name: "Kocioł Mod.Controller Connected"
+    - name: "Kocioł Heat demand from Mod.Controller"
+    - name: "Kocioł Heat demand from on/off controller"
+    - name: "Kocioł Frost Protection"        
+    - name: "Kocioł DHW Eco"
+    - name: "Kocioł DHW Blocking"
+    - name: "Kocioł Anti Legionella"
+    - name: "Kocioł DHW Heat Demand"
 
-    - name: "Piec ilość godzin pracy pompy"
+    - name: "Kocioł ilość godzin pracy pompy"
       unit_of_measurement: h
       accuracy_decimals: 0  
-    - name: "Piec ilość godzin pracy zaworu trójdrożnego"
+    - name: "Kocioł ilość godzin pracy zaworu trójdrożnego"
       unit_of_measurement: h
       accuracy_decimals: 0  
-    - name: "Piec ilość godzin pracy"
+    - name: "Kocioł ilość godzin pracy"
       unit_of_measurement: h
       accuracy_decimals: 0  
-    - name: "Piec ilość godzin pracy c.w.u."
+    - name: "Kocioł ilość godzin pracy c.w.u."
       unit_of_measurement: h
       accuracy_decimals: 0  
-    - name: "Piec ilość godzin zasilania"
+    - name: "Kocioł ilość godzin zasilania"
       unit_of_measurement: h
       accuracy_decimals: 0  
       
-    - name: "Piec ilość startów pompy"
+    - name: "Kocioł ilość startów pompy"
       unit_of_measurement: il
       accuracy_decimals: 0
-    - name: "Piec ilość trójdrożnych cykli zaworu"
+    - name: "Kocioł ilość trójdrożnych cykli zaworu"
       unit_of_measurement: il
       accuracy_decimals: 0
-    - name: "Piec ilość startów c.w.u."
+    - name: "Kocioł ilość startów c.w.u."
       unit_of_measurement: il
       accuracy_decimals: 0
-    - name: "Piec ilość startów palnika"
+    - name: "Kocioł ilość startów palnika"
       unit_of_measurement: il
       accuracy_decimals: 0
-    - name: "Piec ilość nieudanych startów palnika"
+    - name: "Kocioł ilość nieudanych startów palnika"
       unit_of_measurement: il
       accuracy_decimals: 0
-    - name: "Piec ilość awarii płomienia"
+    - name: "Kocioł ilość awarii płomienia"
       unit_of_measurement: il
-      accuracy_decimals: 0
-    
-    - name: "Piec Ciśnienie wody"
-      unit_of_measurement: bar
-      accuracy_decimals: 2 
-    - name: "Piec kontrola temp."
-      unit_of_measurement: °C
-      accuracy_decimals: 2 
-    - name: "Piec natężenie przepływu C.W.U."
-      unit_of_measurement: l/m
       accuracy_decimals: 0
           
   - platform: wifi_signal
-    name: "Piec WiFi Signal"
+    name: "Kocioł WiFi Signal"
     update_interval: 60s
     
   - platform: uptime
-    name: "Piec Uptime"  
-      
-  # - name: "My Custom Pressure Sensor"
-  #   unit_of_measurement: hPa
-  #   accuracy_decimals: 2
-
+    name: "Kocioł Uptime"  
