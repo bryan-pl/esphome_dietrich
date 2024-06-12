@@ -1,4 +1,4 @@
-# Dietrich (Remeha) Boiler connectivity using ESP8266 with ESPHOME
+# Dietrich MCX PLUS (Remeha) Boiler connectivity using ESP8266 with ESPHOME
 
 !Forked from kakaki/esphome_dietrich to provide full compatibility with my instance of HA and DeDietrich MCX PLUS.
 
