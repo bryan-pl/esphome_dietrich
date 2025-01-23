@@ -146,7 +146,7 @@ sensor:
     - name: "Kocioł temp. podgrzewacza"
       unit_of_measurement: °C
       accuracy_decimals: 2
-    - name: "Kocioł temp. kociola"
+    - name: "Kocioł temp. kotła"
       unit_of_measurement: °C
       accuracy_decimals: 2
     - name: "Kocioł temp. pomieszczenia"
@@ -175,28 +175,28 @@ sensor:
     - name: "Kocioł wewnętrzna wartość zadana"
       unit_of_measurement: "%"
       accuracy_decimals: 0  
-    - name: "Kocioł available_power"
+    - name: "Kocioł dostępna moc"
       unit_of_measurement: "%"
       accuracy_decimals: 0  
-    - name: "Kocioł pump_percentage"
+    - name: "Kocioł procent pracy pompy"
       unit_of_measurement: "%"
       accuracy_decimals: 0  
     
-    - name: "Kocioł desired_max_power"
+    - name: "Kocioł oczekiwana moc maksymalna"
       unit_of_measurement: "%"
       accuracy_decimals: 0  
-    - name: "Kocioł actual_power"
+    - name: "Kocioł moc aktualna"
       unit_of_measurement: "%"
       accuracy_decimals: 0      
       
-    - name: "Kocioł Mod.Controller Connected"
-    - name: "Kocioł Heat demand from Mod.Controller"
-    - name: "Kocioł Heat demand from on/off controller"
-    - name: "Kocioł Frost Protection"        
-    - name: "Kocioł DHW Eco"
-    - name: "Kocioł DHW Blocking"
-    - name: "Kocioł Anti Legionella"
-    - name: "Kocioł DHW Heat Demand"
+    - name: "Kocioł Podłączony kontroler modulujący"
+    - name: "Kocioł Żądanie grzania z kontrolera modulującego"
+    - name: "Kocioł Żądanie grzania z kontrolera wł/wył"
+    - name: "Kocioł Zabezpieczenie przed zamarznięciem"        
+    - name: "Kocioł CWU Eko"
+    - name: "Kocioł CWU Blokada"
+    - name: "Kocioł AntyLegionella"
+    - name: "Kocioł Żądanie grzania CWU"
 
     - name: "Kocioł ilość godzin pracy pompy"
       unit_of_measurement: h
@@ -207,7 +207,7 @@ sensor:
     - name: "Kocioł ilość godzin pracy"
       unit_of_measurement: h
       accuracy_decimals: 0  
-    - name: "Kocioł ilość godzin pracy c.w.u."
+    - name: "Kocioł ilość godzin pracy CWU"
       unit_of_measurement: h
       accuracy_decimals: 0  
     - name: "Kocioł ilość godzin zasilania"
@@ -220,7 +220,7 @@ sensor:
     - name: "Kocioł ilość trójdrożnych cykli zaworu"
       unit_of_measurement: il
       accuracy_decimals: 0
-    - name: "Kocioł ilość startów c.w.u."
+    - name: "Kocioł ilość startów CWU"
       unit_of_measurement: il
       accuracy_decimals: 0
     - name: "Kocioł ilość startów palnika"
@@ -234,7 +234,7 @@ sensor:
       accuracy_decimals: 0
           
   - platform: wifi_signal
-    name: "Kocioł WiFi Signal"
+    name: "Kocioł poziom sygnału WiFi"
     update_interval: 60s
     
   - platform: uptime
