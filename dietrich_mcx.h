@@ -1,3 +1,4 @@
+// biblioteka do podłączenia się do kotła DeDietrich MCX Plus
 #include "esphome.h"
 
 class Dietrich : public PollingComponent, public UARTDevice {
