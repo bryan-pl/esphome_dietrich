@@ -1,5 +1,7 @@
 # Dietrich MCX PLUS (Remeha) Boiler connectivity using ESP8266 with ESPHOME
 
+!Warning! This will not work from ESPHOME 2025.2.0 as the service of custom components were withdrawed. Module needs to be rewritten to external component. 
+
 !Forked from kakaki/esphome_dietrich to provide full compatibility with my instance of HA and DeDietrich MCX PLUS.
 
 The board used - Adafruit Huzzach - due to smaller current draw (no usb interface on board) and +5v compatible uart RX pin.
